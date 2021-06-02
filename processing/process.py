@@ -9,6 +9,8 @@ from glob import glob
 from tqdm import tqdm 
 from logger.log import logger 
 from utilities.utils import * 
+# from PIL import ImageFile
+# ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 @click.command()
 @click.option('-s', '--source', help='path to images directory', type=click.Path(True))
@@ -36,9 +38,12 @@ def process_dir(source, target, fmt, model_path, dim):
 	filepaths_accumulator = []
 	
 	for crr_path in tqdm(image_filepaths):
-		features = process_image(crr_path, vgg16_FE)
-		features_accumulator.append(features)
-		filepaths_accumulator.append(crr_path)
+		try:
+			features = process_image(crr_path, vgg16_FE)
+			features_accumulator.append(features)
+			filepaths_accumulator.append(crr_path)
+		except Exception as e:
+			logger.warning(e)
 
 	features_matrix, pca_reducer = reduction(features_accumulator, dim)
 	descriptors = {
