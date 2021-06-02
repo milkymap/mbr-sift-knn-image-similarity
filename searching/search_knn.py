@@ -28,7 +28,7 @@ def main(ctx, debug):
 @click.option('-n', '--k_nearest', help='number of nearest neighbors', type=int)
 @click.option('-d', '--descriptor_path', help='path to descriptor', type=click.File('rb'))
 @click.option('-k', '--knn_path', help='path where the knn model will be stored', type=click.File('wb'))
-@click.option('--save/--no-save', help='should save or not the knn model', default=False)
+@click.option('--save/--no-save', help='should save or not the knn model', default=True)
 @click.pass_context
 def train(ctx, k_nearest, descriptor_path, knn_path, save):
 	descriptor = pickle.load(descriptor_path)

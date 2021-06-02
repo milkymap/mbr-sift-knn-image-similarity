@@ -65,18 +65,14 @@ class ZMQFeaturesExtractor:
 			vgg16_FE = th.load(self.vgg16_path)
 			source = Source(filepaths_scope)
 			loader = DataLoader(dataset=source, batch_size=self.batch_size, shuffle=False)
-			features_accumulator = []
-			filepaths_accumulator = []
 			for batch_images, batch_paths in loader:
 				logger.debug(f'worker n° {pid} process {len(batch_paths):03d} images')
 				batch_features = process_batch(batch_images, vgg16_FE)
-				features_accumulator.append(batch_features)
-				filepaths_accumulator.append(batch_paths)
-
-			pusher.send_pyobj({
-				'features': np.vstack(features_accumulator), 
-				'filepaths': list(it.chain(*filepaths_accumulator))
-			})
+				
+				pusher.send_pyobj({
+					'features': batch_features, 
+					'filepaths': batch_paths
+				})
 
 			with controller.get_lock():
 				controller.value = controller.value - 1

@@ -96,25 +96,30 @@ It contains the :
 		--dim 128
 ```
 # training
+
 ```python
+	# this script load all features and build the knn model 
+	# the knn model is stored on models/model_name.joblib
+	# it can be loaded in nearest in order to find candiates for the mbr-sift
 	python -m searching.search_knn 
 		--debug 
 		train 
 		-n 16 
 		-d dump/descriptors.pkl 
 		-k models/knn.joblib
+		--save
 ```
 
 # searching 
 ```python
 	# this script load a source image and the extracted features
-	# apply knn to get the nearest candiate according to a contextual similarity
-	# apply MBR-SIFT on those candidate according to a structural similarity
+	# apply knn to get the nearest candiate
+	# apply MBR-SIFT on those candidate
 	# it contains two subcommands:
-	# nearest and search
+	# nearest and search-map
 	# those subcommand can be chained one after another 
 	# python -m processing.process nearest --help : in order to have a good view of how it works
-	# python -m processing.process search --help : in order to have a good view of how it works
+	# python -m processing.process search-map --help : in order to have a good view of how it works
 	
 	python -m searching.search 
 		--debug 

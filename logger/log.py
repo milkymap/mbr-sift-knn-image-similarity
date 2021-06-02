@@ -3,7 +3,7 @@ from loguru import logger
 
 log_format = [
 	'<W><k>{time: YYYY-MM-DD hh:mm:ss}</k></W>',
-	'<c>{file:^11}</c>',
+	'<c>{file:^15}</c>',
 	'<e>{line:03d}</e>',
 	'<r>{level:^10}</r>',
 	'<Y><k>{message:<50}</k></Y>'
