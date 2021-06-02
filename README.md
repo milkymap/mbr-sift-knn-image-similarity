@@ -9,17 +9,16 @@
 ---
 ---
 
-This project allows you to find the occurrences of an image by scanning a database.
-Two methods were used: knn and mbr-sift. The knn method allows us to find
-more similar images based on some contextual similarity. That of mbr-sift is
-then used on these candidates which are reassembled by knn in order to find the images which are
-structurally similar.
+This project aims to find the occurrences of an image by scanning a database. Two methods were used: knn and mbr-sift. The knn method allows us to reassemble images according to a certain contextual similarity. Images that are returned by the knn method are considered to be candidates for the mbr-sift method. For each image, we compute a vector of size 128 which is the result of the application of the PCA method on the features extracted by vgg16.
 
 # contents
 * [structure](#structure)
 * [prerequisites](#prerequisites)
 * [installation](#installation)
-* [running](#running)
+* [processing](#processing)
+* [training](#training)
+* [searching](#searching)
+
 
 
 # structure
@@ -81,20 +80,32 @@ It contains the :
 	pip install -r requirements.txt
 ```
 
-# running 
+# processing
 ```python
 	# this script will load all images from the target dir 
 	# ../mbr\[SIFT\]-image-similarity/source/ 
 	# process those images and extractt their features
 	# python -m processing.process --help : in order to have a good view of how it works  
 	python -m processing.process 
-		-s ../mbr\[SIFT\]-image-similarity/source/ 
-		-t dump/descriptors.pkl 
-		-m models/vgg16.pt  
-		-f '*.jpg' 
+		--source ../mbr\[SIFT\]-image-similarity/source/ 
+		--target dump/descriptors.pkl 
+		--model_path models/vgg16.pt 
+		--nb_workers 2 
+		--port 8500 
+		--batch_size 4 
 		--dim 128
 ```
+# training
+```python
+	python -m searching.search_knn 
+		--debug 
+		train 
+		-n 16 
+		-d dump/descriptors.pkl 
+		-k models/knn.joblib
+```
 
+# searching 
 ```python
 	# this script load a source image and the extracted features
 	# apply knn to get the nearest candiate according to a contextual similarity
