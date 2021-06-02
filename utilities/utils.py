@@ -17,6 +17,7 @@ from logger.log import logger
 from torchvision import models
 from sklearn.decomposition import PCA 
 
+
 def get_cwd(filename):
     return path.dirname(path.realpath(filename))
 
@@ -52,24 +53,31 @@ def get_model():
 def get_mapper():
     return T.Compose(
         [
-        # 	T.Resize(size=(224, 224)), 
-            T.Resize(256),
-            T.CenterCrop(224),
+            T.Resize((256, 256)),
+            T.CenterCrop((224, 224)),
             T.ToTensor(),
             T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     )
 
+def read_image_for_vgg16(image_path):
+	image = Image.open(image_path).convert('RGB')
+	mapper = get_mapper()
+	prepared_image = mapper(image)
+	return prepared_image
+
 def process_image(image_path, vgg16_FE):
-    # logger.info(f"process image {image_path}")
     image = Image.open(image_path).convert('RGB')
     mapper = get_mapper()
     prepared_image = mapper(image)
-    # logger.info(prepared_image.shape)
     with th.no_grad():
         features_1x4096 = vgg16_FE(prepared_image[None, ...])
-        # logger.info(features_1x4096.shape)
         return th.squeeze(features_1x4096).numpy()
+
+def process_batch(input_batch, vgg16_FE):
+	with th.no_grad():
+		features_Nx4096 = vgg16_FE(input_batch)
+		return th.squeeze(features_Nx4096).numpy()
 
 def reduction(features, target_dim):
     pca_reducer = PCA(n_components=target_dim)
