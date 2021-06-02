@@ -5,8 +5,10 @@
     A python script based on knn and mbr-sift for fast image search 
   </h3>  
 </p>
+
 ---
 ---
+
 This project allows you to find the occurrences of an image by scanning a database.
 Two methods were used: knn and mbr-sift. The knn method allows us to find
 more similar images based on some contextual similarity. That of mbr-sift is
