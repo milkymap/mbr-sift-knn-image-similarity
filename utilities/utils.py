@@ -33,7 +33,7 @@ def pull_files_from(location, extension='*'):
         accumulator.append(path_to_image)
     return accumulator
 
-def get_model():
+def get_model(render=True):
     # vgg16 has 7 layers on the sequential part
     # head   => [linear, relu, dropout, linear, relu, dropout, linear]
     # retain => [linear, relu, dropout, linear]
@@ -48,7 +48,8 @@ def get_model():
     if not path.isdir(path_to_models):
         os.mkdir(path_to_models)
     th.save(vgg16, path.join(path_to_models, 'vgg16.pt'))
-    return vgg16
+    if render:
+    	return vgg16
 
 def get_mapper():
     return T.Compose(
