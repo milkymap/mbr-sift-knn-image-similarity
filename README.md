@@ -1,6 +1,6 @@
 # mbr-sift-knn-image-similarity
 <p align="center"> 
-  <img src="./utils_readme/images/main.png" width="640">
+  <img src="./utils_readme/main.png" width="640">
   <h3 align="center">
     A python script based on knn and mbr-sift for fast image search 
   </h3>  
