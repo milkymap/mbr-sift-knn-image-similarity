@@ -2,7 +2,7 @@ import requests, json
 from pathlib import Path
 from tqdm import tqdm
 from datetime import datetime, timedelta
-
+from loguru import logger
 
 def get_image_ids(date, api_key, env="q1bdc3of"):
     headers = {"apikey": api_key}
@@ -18,8 +18,9 @@ def get_image_ids(date, api_key, env="q1bdc3of"):
 
 def download_images(date, api_key, outpath, env="q1bdc3of"):
     headers = {"apikey": api_key}
-    p = Path(outpath)
+    p = Path(outpath) / date
     p.mkdir(parents=True, exist_ok=True)
+    logger.info(f"download images to {p}")
     img_ids = get_image_ids(date, api_key, env)
     for img_id in tqdm(img_ids):
         url = f"https://{env}.ouest-france.fr/media/photo/{img_id}"
