@@ -18,56 +18,63 @@ from torchvision import models
 from sklearn.decomposition import PCA 
 
 def get_cwd(filename):
-	return path.dirname(path.realpath(filename))
+    return path.dirname(path.realpath(filename))
 
 def read_image(image_path, size):
     img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
     return cv2.resize(img, size, interpolation=cv2.INTER_CUBIC)
 
 def pull_files_from(location, extension='*'):
-	contents = listdir(location)
-	accumulator = []
-	for item in contents:
-		path_to_image = path.join(location, item)
-		accumulator.append(path_to_image)
-	return accumulator
+    contents = listdir(location)
+    accumulator = []
+    for item in contents:
+        path_to_image = path.join(location, item)
+        accumulator.append(path_to_image)
+    return accumulator
 
 def get_model():
-	# vgg16 has 7 layers on the sequential part
-	# head   => [linear, relu, dropout, linear, relu, dropout, linear]
-	# retain => [linear, relu, dropout, linear]
-	# remove => [relu, dropout, linear]
+    # vgg16 has 7 layers on the sequential part
+    # head   => [linear, relu, dropout, linear, relu, dropout, linear]
+    # retain => [linear, relu, dropout, linear]
+    # remove => [relu, dropout, linear]
 
-	cwd = get_cwd(__file__)
-	path_to_models = path.join(cwd, '..', 'models')
-	logger.debug('download vgg16 with pretrained weights')
-	vgg16 = models.vgg16(pretrained=True, progress=True)
+    cwd = get_cwd(__file__)
+    path_to_models = path.join(cwd, '..', 'models')
+    logger.debug('download vgg16 with pretrained weights')
+    vgg16 = models.vgg16(pretrained=True, progress=True)
 
-	vgg16.classifier = vgg16.classifier[:-3]  
-	if not path.isdir(path_to_models):
-		os.mkdir(path_to_models)
-	th.save(vgg16, path.join(path_to_models, 'vgg16.pt'))
-	return vgg16
+    vgg16.classifier = vgg16.classifier[:-3]  
+    if not path.isdir(path_to_models):
+        os.mkdir(path_to_models)
+    th.save(vgg16, path.join(path_to_models, 'vgg16.pt'))
+    return vgg16
 
 def get_mapper():
-	return T.Compose([
-		T.Resize(size=(224, 224)), 
-		T.ToTensor(),
-		T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-	])
+    return T.Compose(
+        [
+        # 	T.Resize(size=(224, 224)), 
+            T.Resize(256),
+            T.CenterCrop(224),
+            T.ToTensor(),
+            T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
 
 def process_image(image_path, vgg16_FE):
-	image = Image.open(image_path)
-	mapper = get_mapper()
-	prepared_image = mapper(image)
-	with th.no_grad():
-		features_1x4096 = vgg16_FE(prepared_image[None, ...])
-		return th.squeeze(features_1x4096).numpy()
+    # logger.info(f"process image {image_path}")
+    image = Image.open(image_path).convert('RGB')
+    mapper = get_mapper()
+    prepared_image = mapper(image)
+    # logger.info(prepared_image.shape)
+    with th.no_grad():
+        features_1x4096 = vgg16_FE(prepared_image[None, ...])
+        # logger.info(features_1x4096.shape)
+        return th.squeeze(features_1x4096).numpy()
 
 def reduction(features, target_dim):
-	pca_reducer = PCA(n_components=target_dim)
-	new_features = pca_reducer.fit_transform(np.vstack(features))
-	return new_features, pca_reducer
+    pca_reducer = PCA(n_components=target_dim)
+    new_features = pca_reducer.fit_transform(np.vstack(features))
+    return new_features, pca_reducer
 
 def get_SIFT(image, extractor):
     keypoints, descriptor = extractor.detectAndCompute(image, None) 
@@ -103,30 +110,30 @@ def compare_descriptors(source_des, target_des, threshold):
 
 
 def search(pid, source, target_paths, size, score, threshold, barrier, controller, mutex, condition, queue):
-	with controller.get_lock():
-		controller.value += 1  # increament the controller 
-	logger.debug(f'worker : {pid} wait on the barrier')
-	barrier.wait()  # wait for other worker to be ready
-	sift = cv2.SIFT_create()
-	source_img = read_image(source, size)
-	source_keypoints, source_features = get_SIFT(source_img, sift)
-	extended_source_features = map_SIFT2MBRSIFT(source_features)
+    with controller.get_lock():
+        controller.value += 1  # increament the controller 
+    logger.debug(f'worker : {pid} wait on the barrier')
+    barrier.wait()  # wait for other worker to be ready
+    sift = cv2.SIFT_create()
+    source_img = read_image(source, size)
+    source_keypoints, source_features = get_SIFT(source_img, sift)
+    extended_source_features = map_SIFT2MBRSIFT(source_features)
 
-	accumulator = []
-	for current_path in target_paths:
-		target_img = read_image(current_path, size)
-		target_keypoints, target_features = get_SIFT(target_img, sift)
-		extended_target_features = map_SIFT2MBRSIFT(target_features)
-		metrics = compare_descriptors(extended_source_features, extended_target_features, threshold)
-		weights = metrics / np.maximum(len(source_keypoints), len(target_keypoints))
-		logger.debug(f'worker : {pid} >> mbr-sift score:{weights:07.3f}')
-		if weights > score:
-			accumulator.append((current_path, weights))
+    accumulator = []
+    for current_path in target_paths:
+        target_img = read_image(current_path, size)
+        target_keypoints, target_features = get_SIFT(target_img, sift)
+        extended_target_features = map_SIFT2MBRSIFT(target_features)
+        metrics = compare_descriptors(extended_source_features, extended_target_features, threshold)
+        weights = metrics / np.maximum(len(source_keypoints), len(target_keypoints))
+        logger.debug(f'worker : {pid} >> mbr-sift score:{weights:07.3f}')
+        if weights > score:
+            accumulator.append((current_path, weights))
 
-	queue.put(accumulator)
-	with controller.get_lock():
-		controller.value -= 1
-	
-	mutex.acquire()
-	condition.notify()
-	mutex.release()
+    queue.put(accumulator)
+    with controller.get_lock():
+        controller.value -= 1
+    
+    mutex.acquire()
+    condition.notify()
+    mutex.release()
