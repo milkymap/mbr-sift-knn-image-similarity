@@ -1,3 +1,7 @@
+# Local directories  
+dump/
+models/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
