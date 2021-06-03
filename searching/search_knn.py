@@ -61,7 +61,7 @@ def nearest(ctx, k_nearest, source, knn_path, vgg16_path, descriptor_path):
 	print('\n'.join(response))
 	ctx.obj['source'] = source 
 	ctx.obj['target_paths'] = response
-
+   
 @click.command()
 @click.option('--size', help='size of resizing version', type=click.Tuple([int, int]))
 @click.option('--score', help='threshold value for weights metrics', default=0.5, type=float)

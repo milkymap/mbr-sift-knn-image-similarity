@@ -32,6 +32,10 @@ def load_model(vgg16_path=f"{project_path}/models/vgg16.pt"):
     logger.info(f"loading vgg16 model from {vgg16_path}")
     return th.load(vgg16_path)
 
+@st.cache()
+def load_knn(vgg16_path=f"{project_path}/models/knn.joblib"):
+    logger.info(f"loading knn model from {vgg16_path}")
+    return joblib.load(vgg16_path)
 
 @st.cache()
 def load_index(index_path="/tmp/202101.ngt"):
@@ -52,15 +56,12 @@ def load_image_paths(descriptor_path=f"{project_path}/dump/descriptors.pkl"):
     logger.info(f"loading pca model from {descriptor_path}")
     with open(descriptor_path, "rb") as f:
         descriptor = pickle.load(f)
-        # fps = [path.join("/toto", fp.lstrip(".")) for fp in descriptor["filepaths"]]
         fps = ["/home/exploit" + fp.lstrip(".") for fp in descriptor["filepaths"]]
         return np.array(fps)
 
 
 def show_images(images):
     st.title("similar images")
-    # images = [path.join(root, p) for p in contents]
-    # images = images[:n_photos]
     images = [Image.open(p).resize((128, 128)) for p in images]
     n_cols = 6
     n_rows = 1 + len(images) // n_cols
@@ -78,10 +79,17 @@ def find_similar(image, model, pca, index, k=10):
     reduced_features = pca.transform(features[None, :])
     return index.search(reduced_features, k)
 
+def find_similar_by_knn(image, model, pca, knn_agent, k=16):
+    features = process_pil_image(image, model)
+    reduced_features = pca.transform(features[None, :])
+    distances, indices = knn_agent.kneighbors(reduced_features, k)
+    return distances, indices[0] 
 
 index = load_index()
 model = load_model()
 pca = load_pca()
+knn = load_knn()
+
 image_paths = load_image_paths()
 
 
@@ -116,10 +124,10 @@ n_photos = st.slider("number of images", 6, 128, 16)
 if uploaded_image is not None:
 
     main_col[0].image(uploaded_image)
-    similar_images = find_similar(uploaded_image, model, pca, index, k=n_photos)
+    #similar_images = find_similar(uploaded_image, model, pca, index, k=n_photos)
+    similar_images = find_similar_by_knn(uploaded_image, model, pca, knn_agent, k=n_photos)
     df = pd.DataFrame(similar_images, columns=["image_id", "distance"])
     df["images"] = image_paths[df.image_id]
-    # st.write(df)
     show_images(df["images"])
 
 
