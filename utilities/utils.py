@@ -62,14 +62,19 @@ def get_mapper():
         ]
     )
 
+def read_image_for_pil(image_path):
+	image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+	image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+	return image
+
 def read_image_for_vgg16(image_path):
-	image = Image.open(image_path).convert('RGB')
+	image = read_image_for_pil(image_path)
 	mapper = get_mapper()
 	prepared_image = mapper(image)
 	return prepared_image
 
 def process_image(image_path, vgg16_FE):
-    image = Image.open(image_path).convert('RGB')
+    image = read_image_for_pil(image_path)
     mapper = get_mapper()
     prepared_image = mapper(image)
     with th.no_grad():
