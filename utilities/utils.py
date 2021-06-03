@@ -81,6 +81,13 @@ def process_image(image_path, vgg16_FE):
         features_1x4096 = vgg16_FE(prepared_image[None, ...])
         return th.squeeze(features_1x4096).numpy()
 
+def process_pil_image(image, vgg16_FE):
+    mapper = get_mapper()
+    prepared_image = mapper(image)
+    with th.no_grad():
+        features_1x4096 = vgg16_FE(prepared_image[None, ...])
+        return th.squeeze(features_1x4096).numpy()
+
 def process_batch(input_batch, vgg16_FE):
 	with th.no_grad():
 		features_Nx4096 = vgg16_FE(input_batch)
