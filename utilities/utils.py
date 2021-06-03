@@ -78,7 +78,7 @@ def process_image(image_path, vgg16_FE):
 def process_batch(input_batch, vgg16_FE):
 	with th.no_grad():
 		features_Nx4096 = vgg16_FE(input_batch)
-		return th.squeeze(features_Nx4096).numpy()
+		return th.squeeze(features_Nx4096.to('cpu')).numpy()
 
 def reduction(features, target_dim):
     pca_reducer = PCA(n_components=target_dim)
