@@ -17,6 +17,7 @@ from logger.log import logger
 from torchvision import models
 from sklearn.decomposition import PCA 
 
+Image.MAX_IMAGE_PIXELS = None
 
 def get_cwd(filename):
     return path.dirname(path.realpath(filename))
