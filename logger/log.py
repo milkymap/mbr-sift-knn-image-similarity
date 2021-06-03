@@ -1,9 +1,6 @@
 from sys import stdout 
 from loguru import logger 
 
-#ohloo9eY0ou1dai7methai2U
- 
-
 log_format = [
 	'<W><k>{time: YYYY-MM-DD hh:mm:ss}</k></W>',
 	'<c>{file:^15}</c>',
