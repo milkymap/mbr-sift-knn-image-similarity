@@ -41,8 +41,9 @@ class GPUFeaturesExtractor:
 		global_features_accumulator = []
 		global_filepaths_accumulator = []
 		start = time.time()
+		total = 0
 		for batch_images, batch_paths in loader:
-			logger.debug(f'worker process {len(batch_paths):03d} images')
+			logger.debug(f'worker process {len(batch_paths):03d} images >> Total : f{toltal:05d}')
 			batch_features = process_batch(batch_images.to(self.device), vgg16_FE)
 			global_features_accumulator.append(batch_features)
 			global_filepaths_accumulator.append(batch_paths)
