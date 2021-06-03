@@ -31,9 +31,7 @@ class ZMQFeaturesExtractor:
 		self.target = target 
 		self.aggregator_port = aggregator_port 
 		self.batch_size = batch_size
-		self.device = th.device('cuda:0' if th.cuda.is_available() else 'cpu')
-		logger.info(f'The model will be load on {self.device}')
-
+		
 	def start(self):
 		self.filepaths = pull_files_from(self.source_path, '*')
 		nb_images = len(self.filepaths)
@@ -65,12 +63,11 @@ class ZMQFeaturesExtractor:
 			barrier.wait() 
 
 			vgg16_FE = th.load(self.vgg16_path)
-			vgg16_FE.to(self.device)
 			source = Source(filepaths_scope)
 			loader = DataLoader(dataset=source, batch_size=self.batch_size, shuffle=False)
 			for batch_images, batch_paths in loader:
 				logger.debug(f'worker n° {pid} process {len(batch_paths):03d} images')
-				batch_features = process_batch(batch_images.to(self.device), vgg16_FE)
+				batch_features = process_batch(batch_images, vgg16_FE)
 				
 				pusher.send_pyobj({
 					'features': batch_features, 
