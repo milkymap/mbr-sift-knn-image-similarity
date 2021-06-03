@@ -12,5 +12,3 @@ class Source(Dataset):
 		current_path = self.filepaths[index]
 		return read_image_for_vgg16(current_path), current_path
 
-
-
