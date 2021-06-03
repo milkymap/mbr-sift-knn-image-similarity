@@ -47,7 +47,7 @@ class GPUFeaturesExtractor:
 		pca_reducer = None
 		for batch_images, batch_paths in loader:
 			total += batch_images.shape[0]
-			logger.debug(f'worker process {total:07d} images >> remainder {nb_images:07d}')
+			logger.debug(f'worker process {total:07d} images >> over {nb_images:07d}')
 			batch_features = process_batch(batch_images.to(self.device), vgg16_FE)
 			if total < self.pca_number:
 				global_features_accumulator.append(batch_features)
@@ -58,7 +58,7 @@ class GPUFeaturesExtractor:
 					global_features_accumulator = [features_matrix]
 				else:
 					features_matrix = pca_reducer.transform(batch_features)
-					global_features_accumulator.append(batch_features)	
+					global_features_accumulator.append(features_matrix)	
 						
 			global_filepaths_accumulator.append(batch_paths)
 
@@ -82,7 +82,7 @@ class GPUFeaturesExtractor:
 @click.option('-d', '--dim', help='output dim(reduction)', type=int)
 @click.option('--pca_number', type=int, help='number of sample for pca computation')
 @click.option('--batch_size', type=int, default=4)
-def process_images(source, target, model_path, dim, pca_numer, batch_size):
+def process_images(source, target, model_path, dim, pca_number, batch_size):
 	try:
 		logger.debug('process images one by one by using vgg16')
 		if not path.isfile(model_path):
