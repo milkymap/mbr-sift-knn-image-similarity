@@ -34,7 +34,7 @@ def load_model(vgg16_path=f"{project_path}/models/vgg16.pt"):
 
 
 @st.cache()
-def load_index(index_path="/tmp/knn2.ngt"):
+def load_index(index_path="/tmp/202101.ngt"):
     logger.info(f"loading ngt index from {index_path}")
     return ngtpy.Index(index_path)
 
@@ -47,15 +47,42 @@ def load_pca(descriptor_path=f"{project_path}/dump/descriptors.pkl"):
         return descriptor["reducer"]
 
 
-index = load_index()
-model = load_model()
-pca = load_pca()
+# @st.cache()
+def load_image_paths(descriptor_path=f"{project_path}/dump/descriptors.pkl"):
+    logger.info(f"loading pca model from {descriptor_path}")
+    with open(descriptor_path, "rb") as f:
+        descriptor = pickle.load(f)
+        # fps = [path.join("/toto", fp.lstrip(".")) for fp in descriptor["filepaths"]]
+        fps = ["/home/exploit" + fp.lstrip(".") for fp in descriptor["filepaths"]]
+        return np.array(fps)
+
+
+def show_images(images):
+    st.title("similar images")
+    # images = [path.join(root, p) for p in contents]
+    # images = images[:n_photos]
+    images = [Image.open(p).resize((128, 128)) for p in images]
+    n_cols = 6
+    n_rows = 1 + len(images) // n_cols
+    rows = [st.beta_container() for _ in range(n_rows)]
+    cols_per_row = [r.beta_columns(n_cols) for r in rows]
+
+    for image_index, cat_image in enumerate(images):
+        with rows[image_index // n_cols]:
+            with cols_per_row[image_index // n_cols][image_index % n_cols]:
+                st.image(cat_image)
 
 
 def find_similar(image, model, pca, index, k=10):
     features = process_pil_image(image, model)
     reduced_features = pca.transform(features[None, :])
     return index.search(reduced_features, k)
+
+
+index = load_index()
+model = load_model()
+pca = load_pca()
+image_paths = load_image_paths()
 
 
 with st.sidebar:
@@ -79,33 +106,23 @@ with st.sidebar:
 
     main_col = st.beta_columns(1)
 
+# with st.form(key="grid_reset"):
+#     st.header("display configuration")
+n_photos = st.slider("number of images", 6, 128, 16)
+    # n_cols = st.number_input("Number of columns", 2, 8, 5)
+    # st.form_submit_button(label="Reset images and layout")
+
+
 if uploaded_image is not None:
+
     main_col[0].image(uploaded_image)
-    similar_images = find_similar(uploaded_image, model, pca, index)
+    similar_images = find_similar(uploaded_image, model, pca, index, k=n_photos)
     df = pd.DataFrame(similar_images, columns=["image_id", "distance"])
-    st.write(df)
+    df["images"] = image_paths[df.image_id]
+    # st.write(df)
+    show_images(df["images"])
 
 
-with st.form(key="grid_reset"):
-    st.header("display configuration")
-    n_photos = st.slider("Number of photos:", 4, 128, 16)
-    n_cols = st.number_input("Number of columns", 2, 8, 5)
-    st.form_submit_button(label="Reset images and layout")
-
-
-st.title("similar images")
-cwd = path.dirname(path.realpath(__file__))
-root = path.join(cwd, "../../images_2021/2021-01-01")
-contents = os.listdir(root)
-cat_images = [path.join(root, p) for p in contents]
-cat_images = cat_images[:n_photos]
-cat_images = [Image.open(p).resize((128, 128)) for p in cat_images]
-
-n_rows = 1 + len(cat_images) // n_cols
-rows = [st.beta_container() for _ in range(n_rows)]
-cols_per_row = [r.beta_columns(n_cols) for r in rows]
-
-for image_index, cat_image in enumerate(cat_images):
-    with rows[image_index // n_cols]:
-        with cols_per_row[image_index // n_cols][image_index % n_cols]:
-            st.image(cat_image)
+# cwd = path.dirname(path.realpath(__file__))
+# root = path.join(cwd, "../../images_2021/2021-01-01")
+# contents = os.listdir(root)
