@@ -2,6 +2,8 @@ import numpy as np
 import requests
 import streamlit as st
 
+import joblib 
+
 import pandas as pd
 import cv2
 import os
@@ -33,9 +35,9 @@ def load_model(vgg16_path=f"{project_path}/models/vgg16.pt"):
     return th.load(vgg16_path)
 
 @st.cache()
-def load_knn(vgg16_path=f"{project_path}/models/knn.joblib"):
-    logger.info(f"loading knn model from {vgg16_path}")
-    return joblib.load(vgg16_path)
+def load_knn(knn_path=f"{project_path}/models/knn.joblib"):
+    logger.info(f"loading knn model from {knn_path}")
+    return joblib.load(knn_path)
 
 @st.cache()
 def load_index(index_path="/tmp/202101.ngt"):
